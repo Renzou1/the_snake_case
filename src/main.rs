@@ -54,7 +54,7 @@ impl ggez::event::EventHandler<GameError> for State {
                 {
                     self.apple.0.x = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
                     self.apple.0.y = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
-                    self.speed = (self.speed as f32 * 1.1) as u32 ;
+                    self.speed = self.speed + 2;
                 }
             }
         return Ok(());
@@ -75,21 +75,33 @@ impl ggez::event::EventHandler<GameError> for State {
         match input.keycode {
 
             Some(KeyCode::W | KeyCode::Up) => {
-                self.head.2 = Direction::Up;
+                match self.head.2{
+                    Direction::Down => {},
+                    _ => self.head.2 = Direction::Up,
+                } 
             }
             Some(KeyCode::S | KeyCode::Down) => {
-                self.head.2 = Direction::Down;
+                match self.head.2{
+                    Direction::Up => {},
+                    _ => self.head.2 = Direction::Down,
+                } 
             }
             Some(KeyCode::D | KeyCode::Right) => {
-                self.head.2 = Direction::Right;
+                match self.head.2{
+                    Direction::Left => {},
+                    _ => self.head.2 = Direction::Right,
+                } 
             }
             Some(KeyCode::A | KeyCode::Left) => {
-                self.head.2 = Direction::Left;
+                match self.head.2{
+                    Direction::Right => {},
+                    _ => self.head.2 = Direction::Left,
+                } 
             }
             _ => (),
         }
 
-        Ok(())
+        Return Ok(());
     }
 }
 
