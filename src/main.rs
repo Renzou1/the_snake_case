@@ -1,29 +1,7 @@
 use ggez::*;
 use ggez::graphics::*;
 use ggez::glam::*;
-
-struct Current(u32, u32);
-
-struct Previous(u32, u32);
-
-struct Position(Current, Previous);
-
-enum Direction{
-    up,
-    right,
-    left,
-    down,
-}
-
-struct Head(Position, Direction);
-
-struct Snake{
-    head: Head,
-    body: Vec<Position>,
-}
-
-
-
+use ggez::input::keyboard::{KeyCode, KeyMods, KeyInput};
 
 fn main() {
     let config = conf::Conf::new();
@@ -33,39 +11,77 @@ fn main() {
         .unwrap();
 
     let state = State {
-        square: graphics::Mesh::new_rectangle(
+        apple: (CurrentP(0.0, 0.0), graphics::Mesh::new_rectangle(
             &ctx,
             graphics::DrawMode::fill(),
             graphics::Rect::new(0.0,0.0,20.0,20.0),
-            Color::WHITE,
-        ).unwrap(),
+            Color::RED,
+        ).unwrap(),),
+        head: (CurrentP(0.0, 0.0), graphics::Mesh::new_rectangle(
+            &ctx,
+            graphics::DrawMode::fill(),
+            graphics::Rect::new(0.0,0.0,20.0,20.0),
+            Color::GREEN,
+        ).unwrap(), Direction::Down),
     };
-
-    println!("Hello, world!");
     event::run(ctx, event_loop, state);
-}
-
-struct State {
-    square: graphics::Mesh,
 }
 
 impl ggez::event::EventHandler<GameError> for State {
   fn update(&mut self, ctx: &mut Context) -> GameResult {
-        //const FPS: u32 = 60;
-        //while ctx.time.check_update_time(60){
+        const FPS: u32 = 60;
+        const SPEED: f32 = -1.0;
 
-        //}
+        while ctx.time.check_update_time(FPS){
+            match self.head.2 {
+                Direction::Up => self.head.0.1 = self.head.0.1 + SPEED,
+                Direction::Right => self.head.0.0 = self.head.0.0 + SPEED,
+                Direction::Left => self.head.0.0 = self.head.0.0 - SPEED,
+                Direction::Down => self.head.0.1 = self.head.0.1 - SPEED,
+            }
+        }
       return Ok(());
   }
   fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas =
             graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
 
-        canvas.draw(&self.square, Vec2::new(0.0,0.0));
+        canvas.draw(&self.apple.1, Vec2::new(self.apple.0.0, self.apple.0.1));
+        canvas.draw(&self.head.1, Vec2::new(self.head.0.0, self.head.0.1));
 
         canvas.finish(ctx)?;
       return Ok(());
   }
 }
+
+struct State {
+    apple: (CurrentP, graphics::Mesh),
+    head: (CurrentP, graphics::Mesh, Direction),
+    //head: (Position, Direction, graphics::Mesh)
+}
+
+struct Snake{
+    head: (Position, Direction, graphics::Mesh),
+    body: Vec<Position>,
+}
+
+struct CurrentP(f32, f32);
+
+struct PreviousP(f32, f32);
+
+struct Position(CurrentP, PreviousP);
+
+enum Direction{
+    Up,
+    Right,
+    Left,
+    Down,
+}
+
+
+
+
+
+
 
 
