@@ -11,13 +11,13 @@ fn main() {
         .unwrap();
 
     let state = State {
-        apple: (CurrentP(0.0, 0.0), graphics::Mesh::new_rectangle(
+        apple: (Vec2::new(0.0, 0.0), graphics::Mesh::new_rectangle(
             &ctx,
             graphics::DrawMode::fill(),
             graphics::Rect::new(0.0,0.0,20.0,20.0),
             Color::RED,
         ).unwrap(),),
-        head: (CurrentP(0.0, 0.0), graphics::Mesh::new_rectangle(
+        head: (Vec2::new(0.0, 0.0), graphics::Mesh::new_rectangle(
             &ctx,
             graphics::DrawMode::fill(),
             graphics::Rect::new(0.0,0.0,20.0,20.0),
@@ -28,54 +28,77 @@ fn main() {
 }
 
 impl ggez::event::EventHandler<GameError> for State {
-  fn update(&mut self, ctx: &mut Context) -> GameResult {
-        const FPS: u32 = 60;
-        const SPEED: f32 = -1.0;
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+            let SPEED: u32 = 3;
+            const DISTANCE: f32 = 20.0;
 
-        while ctx.time.check_update_time(FPS){
-            match self.head.2 {
-                Direction::Up => self.head.0.1 = self.head.0.1 + SPEED,
-                Direction::Right => self.head.0.0 = self.head.0.0 + SPEED,
-                Direction::Left => self.head.0.0 = self.head.0.0 - SPEED,
-                Direction::Down => self.head.0.1 = self.head.0.1 - SPEED,
+            while ctx.time.check_update_time(SPEED){
+                match self.head.2 {
+                    Direction::Up => self.head.0.y = self.head.0.y - DISTANCE,
+                    Direction::Down => self.head.0.y = self.head.0.y + DISTANCE,                
+                    Direction::Right => self.head.0.x = self.head.0.x + DISTANCE,
+                    Direction::Left => self.head.0.x = self.head.0.x - DISTANCE,
+                }
+                if self.apple.0 == self.head.0
+                {
+                    self.head.2 = Direction::Right;
+                }
             }
+        return Ok(());
+    }
+
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+            let mut canvas =
+                graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
+
+            canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
+            canvas.draw(&self.head.1, self.head.0);
+
+            canvas.finish(ctx)?;
+        return Ok(());
+    }
+
+    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput,_repeat: bool) -> GameResult {
+        match input.keycode {
+
+            Some(KeyCode::W | KeyCode::Up) => {
+                self.head.2 = Direction::Up;
+            }
+            Some(KeyCode::S | KeyCode::Down) => {
+                self.head.2 = Direction::Down;
+            }
+            Some(KeyCode::D | KeyCode::Right) => {
+                self.head.2 = Direction::Right;
+            }
+            Some(KeyCode::A | KeyCode::Left) => {
+                self.head.2 = Direction::Left;
+            }
+            _ => (),
         }
-      return Ok(());
-  }
-  fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        let mut canvas =
-            graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
 
-        canvas.draw(&self.apple.1, Vec2::new(self.apple.0.0, self.apple.0.1));
-        canvas.draw(&self.head.1, Vec2::new(self.head.0.0, self.head.0.1));
-
-        canvas.finish(ctx)?;
-      return Ok(());
-  }
+        Ok(())
+    }
 }
 
+
 struct State {
-    apple: (CurrentP, graphics::Mesh),
-    head: (CurrentP, graphics::Mesh, Direction),
+    apple: (Vec2, graphics::Mesh),
+    head: (Vec2, graphics::Mesh, Direction),
     //head: (Position, Direction, graphics::Mesh)
 }
 
 struct Snake{
-    head: (Position, Direction, graphics::Mesh),
-    body: Vec<Position>,
+    head: (PositionInfo, Direction, graphics::Mesh),
+    body: Vec<PositionInfo>,
 }
 
-struct CurrentP(f32, f32);
-
-struct PreviousP(f32, f32);
-
-struct Position(CurrentP, PreviousP);
+struct PositionInfo(Vec2, Vec2);
 
 enum Direction{
     Up,
+    Down,    
     Right,
     Left,
-    Down,
 }
 
 
