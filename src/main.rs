@@ -2,6 +2,9 @@ use ggez::*;
 use ggez::graphics::*;
 use ggez::glam::*;
 use ggez::input::keyboard::{KeyCode, KeyMods, KeyInput};
+use rand::Rng;
+
+const DISTANCE: f32 = 20.0;
 
 fn main() {
     let config = conf::Conf::new();
@@ -9,9 +12,10 @@ fn main() {
         .default_conf(config)
         .build()
         .unwrap();
-
+    let mut x: f32 = (rand::thread_rng().gen_range(0..20) * DISTANCE as i32) as f32;
+    let mut y: f32 = (rand::thread_rng().gen_range(0..20) * DISTANCE as i32) as f32;
     let state = State {
-        apple: (Vec2::new(0.0, 0.0), graphics::Mesh::new_rectangle(
+        apple: (Vec2::new(x , y), graphics::Mesh::new_rectangle(
             &ctx,
             graphics::DrawMode::fill(),
             graphics::Rect::new(0.0,0.0,20.0,20.0),
@@ -29,10 +33,9 @@ fn main() {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-            let SPEED: u32 = 3;
-            const DISTANCE: f32 = 20.0;
+            let speed: u32 = 3;
 
-            while ctx.time.check_update_time(SPEED){
+            while ctx.time.check_update_time(speed){
                 match self.head.2 {
                     Direction::Up => self.head.0.y = self.head.0.y - DISTANCE,
                     Direction::Down => self.head.0.y = self.head.0.y + DISTANCE,                
