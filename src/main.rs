@@ -5,8 +5,8 @@ use ggez::input::keyboard::{KeyCode, KeyInput};
 use rand::Rng;
 
 const DISTANCE: f32 = 20.0;
-const RANGE_X: i32 = 96;
-const RANGE_Y: i32 = 51;
+const RANGE_X: i32 = 1920/20;
+const RANGE_Y: i32 = (1080-60)/20; // menos barra de titulo
 
 fn main() {
     let config = conf::Conf::new();
@@ -78,7 +78,7 @@ impl ggez::event::EventHandler<GameError> for State {
                     Direction::Down => self.head.0.current.y = self.head.0.current.y + DISTANCE,                
                     Direction::Right => self.head.0.current.x = self.head.0.current.x + DISTANCE,
                     Direction::Left => self.head.0.current.x = self.head.0.current.x - DISTANCE,
-                    Direction::NotSet => self.head.0.current.x = self.head.0.current.x,
+                    Direction::NotSet => self.head.0.current.x = self.head.0.current.x, // does nothing
                 }
                 // if catches apple:
                 if self.apple.0 == self.head.0.current
@@ -91,10 +91,15 @@ impl ggez::event::EventHandler<GameError> for State {
                         previous: self.body[self.body.len() - 1].previous,
                     };
                     self.body.push(pos);
+                    let pos2 = Positions{
+                        current: self.body[self.body.len() - 1].previous,
+                        previous: self.body[self.body.len() - 1].previous,
+                    };
+                    self.body.push(pos2);
 
                     self.points = self.points + 100;
                 }
-                
+
             }
         return Ok(());
     }
@@ -104,6 +109,8 @@ impl ggez::event::EventHandler<GameError> for State {
 
             canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
             canvas.draw(&self.head.1, self.head.0.current);
+            //let mut text = graphics::TextFragment::from("teste");
+            //canvas.draw(&self, text);
 
             for part in self.body.iter(){
                 canvas.draw(&self.head.1, part.current); // smake mesh, Vec2
