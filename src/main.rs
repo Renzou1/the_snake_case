@@ -4,14 +4,17 @@ use ggez::glam::*;
 use ggez::input::keyboard::{KeyCode, KeyInput};
 use rand::Rng;
 
+const SCREEN_X: f32 = 1920.0;
+const SCREEN_Y: f32 = 1080.0-60.0; // menos barra de titulo
+
 const DISTANCE: f32 = 20.0;
-const RANGE_X: i32 = 1920/20;
-const RANGE_Y: i32 = (1080-60)/20; // menos barra de titulo
+const RANGE_X: i32 = SCREEN_X as i32/20;
+const RANGE_Y: i32 = SCREEN_Y as i32/20;
 
 fn main() {
-    let config = conf::Conf::new();
     let (ctx, event_loop) = ContextBuilder::new("the_snake_case", "Renzo")
-        .default_conf(config)
+        .window_setup(ggez::conf::WindowSetup::default().title("the_snake_case"))
+        .window_mode(ggez::conf::WindowMode::default().maximized(true))
         .build()
         .unwrap();
 
@@ -62,9 +65,8 @@ fn main() {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        if !self.over {
-            while ctx.time.check_update_time(self.speed){
-
+        while ctx.time.check_update_time(self.speed){
+            if !self.over {
                 self.head.0.previous = self.head.0.current;
                 
                 //updates body
@@ -86,6 +88,12 @@ impl ggez::event::EventHandler<GameError> for State {
                     Direction::Left => self.head.0.current.x = self.head.0.current.x - DISTANCE,
                     Direction::NotSet => self.head.0.current.x = self.head.0.current.x, // does nothing
                 }
+                if self.head.0.current.x > SCREEN_X 
+                || self.head.0.current.x < 0.0
+                || self.head.0.current.y > SCREEN_Y 
+                || self.head.0.current.y < 0.0{
+                    self.over = true;
+                }                
                 // if catches apple:
                 if self.apple.0 == self.head.0.current
                 {
@@ -105,7 +113,6 @@ impl ggez::event::EventHandler<GameError> for State {
 
                     self.points = self.points + 100;
                 }
-
             }
         }
         return Ok(());
@@ -114,10 +121,26 @@ impl ggez::event::EventHandler<GameError> for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
             let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
 
+
             canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
             canvas.draw(&self.head.1, self.head.0.current);
-            //let mut text = graphics::TextFragment::from("teste");
-            //canvas.draw(&self, text);
+
+
+            if self.over{
+                let end_str = format!("Fim de jogo. Pontos: {}", self.points);
+                let end_vec2 = Vec2::new(SCREEN_X/2.0 , SCREEN_Y/2.0);
+                canvas.draw(
+                    &graphics::Text::new(end_str),
+                    graphics::DrawParam::from(end_vec2).color(Color::WHITE),
+                );
+            }  else{
+                let points_str = format!("Pontos: {}", self.points);
+                let points_vec2 = Vec2::new(20.0, 20.0);
+                canvas.draw(
+                    &graphics::Text::new(points_str),
+                    graphics::DrawParam::from(points_vec2).color(Color::WHITE),
+                );
+            }
 
             for part in self.body.iter(){
                 canvas.draw(&self.head.1, part.current); // smake mesh, Vec2
@@ -157,7 +180,6 @@ impl ggez::event::EventHandler<GameError> for State {
             }
             _ => (),
         }
-
         return Ok(());
     }
 }
