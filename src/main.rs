@@ -54,6 +54,7 @@ fn main() {
         body: vec![body_pos],
         speed: 20,
         points: 0,
+        over: false,
     };
 
     event::run(ctx, event_loop, state);
@@ -61,6 +62,7 @@ fn main() {
 
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        if !self.over {
             while ctx.time.check_update_time(self.speed){
 
                 self.head.0.previous = self.head.0.current;
@@ -71,6 +73,10 @@ impl ggez::event::EventHandler<GameError> for State {
                 for i in 1..self.body.len(){
                     self.body[i].previous = self.body[i].current;
                     self.body[i].current = self.body[i - 1].previous;
+                    if self.body[i].current == self.head.0.current{
+                        println!("Game over");
+                        self.over = true;
+                    }
                 }
 
                 match self.head.2 {
@@ -101,6 +107,7 @@ impl ggez::event::EventHandler<GameError> for State {
                 }
 
             }
+        }
         return Ok(());
     }
 
@@ -174,6 +181,7 @@ struct State {
     body: Vec<Positions>,
     speed: u32,
     points: u32,
+    over: bool,
     //head: (Position, Direction, graphics::Mesh)
 }
 
