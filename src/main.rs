@@ -5,7 +5,7 @@ use ggez::input::keyboard::{KeyCode, KeyInput};
 use rand::Rng;
 
 const SCREEN_X: f32 = 1920.0;
-const SCREEN_Y: f32 = 1080.0-60.0; // menos barra de titulo
+const SCREEN_Y: f32 = 1080.0-80.0; // menos barra de titulo
 
 const DISTANCE: f32 = 20.0;
 const RANGE_X: i32 = SCREEN_X as i32/20;
@@ -87,13 +87,13 @@ impl ggez::event::EventHandler<GameError> for State {
                     Direction::Down => self.head.0.current.y = self.head.0.current.y + DISTANCE,                
                     Direction::Right => self.head.0.current.x = self.head.0.current.x + DISTANCE,
                     Direction::Left => self.head.0.current.x = self.head.0.current.x - DISTANCE,
-                    Direction::NotSet => self.head.0.current.x = self.head.0.current.x, // does nothing
+                    Direction::NotSet => {},
                 }
                 self.moved = true;
-
-                if self.head.0.current.x > SCREEN_X 
+                // if out of bounds:
+                if self.head.0.current.x >= SCREEN_X 
                 || self.head.0.current.x < 0.0
-                || self.head.0.current.y > SCREEN_Y 
+                || self.head.0.current.y >= SCREEN_Y 
                 || self.head.0.current.y < 0.0{
                     self.over = true;
                 }                
@@ -124,14 +124,12 @@ impl ggez::event::EventHandler<GameError> for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
             let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
 
-
             canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
             canvas.draw(&self.head.1, self.head.0.current);
 
-
             if self.over{
                 let end_str = format!("Fim de jogo. Pontos: {}", self.points);
-                let end_vec2 = Vec2::new(SCREEN_X/2.0 , SCREEN_Y/2.0);
+                let end_vec2 = Vec2::new(SCREEN_X/2.0 - 70.0, SCREEN_Y/2.0);
                 canvas.draw(
                     &graphics::Text::new(end_str),
                     graphics::DrawParam::from(end_vec2).color(Color::WHITE),
@@ -141,7 +139,7 @@ impl ggez::event::EventHandler<GameError> for State {
                 let points_vec2 = Vec2::new(20.0, 20.0);
                 canvas.draw(
                     &graphics::Text::new(points_str),
-                    graphics::DrawParam::from(points_vec2).color(Color::WHITE),
+                    graphics::DrawParam::from(points_vec2).color(Color::YELLOW),
                 );
             }
 
