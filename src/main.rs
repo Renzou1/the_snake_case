@@ -57,6 +57,7 @@ fn main() {
         body: vec![body_pos],
         speed: 20,
         points: 0,
+        moved: true,
         over: false,
     };
 
@@ -88,6 +89,8 @@ impl ggez::event::EventHandler<GameError> for State {
                     Direction::Left => self.head.0.current.x = self.head.0.current.x - DISTANCE,
                     Direction::NotSet => self.head.0.current.x = self.head.0.current.x, // does nothing
                 }
+                self.moved = true;
+
                 if self.head.0.current.x > SCREEN_X 
                 || self.head.0.current.x < 0.0
                 || self.head.0.current.y > SCREEN_Y 
@@ -152,33 +155,36 @@ impl ggez::event::EventHandler<GameError> for State {
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput,_repeat: bool) -> GameResult {
-        match input.keycode {
+        if self.moved == true{
+            match input.keycode {
 
-            Some(KeyCode::W | KeyCode::Up) => {
-                match self.head.2{
-                    Direction::Down => {},
-                    _ => self.head.2 = Direction::Up,
-                } 
+                Some(KeyCode::W | KeyCode::Up) => {
+                    match self.head.2{
+                        Direction::Down => {},
+                        _ => self.head.2 = Direction::Up,
+                    } 
+                }
+                Some(KeyCode::S | KeyCode::Down) => {
+                    match self.head.2{
+                        Direction::Up => {},
+                        _ => self.head.2 = Direction::Down,
+                    } 
+                }
+                Some(KeyCode::D | KeyCode::Right) => {
+                    match self.head.2{
+                        Direction::Left => {},
+                        _ => self.head.2 = Direction::Right,
+                    } 
+                }
+                Some(KeyCode::A | KeyCode::Left) => {
+                    match self.head.2{
+                        Direction::Right => {},
+                        _ => self.head.2 = Direction::Left,
+                    } 
+                }
+                _ => (),
             }
-            Some(KeyCode::S | KeyCode::Down) => {
-                match self.head.2{
-                    Direction::Up => {},
-                    _ => self.head.2 = Direction::Down,
-                } 
-            }
-            Some(KeyCode::D | KeyCode::Right) => {
-                match self.head.2{
-                    Direction::Left => {},
-                    _ => self.head.2 = Direction::Right,
-                } 
-            }
-            Some(KeyCode::A | KeyCode::Left) => {
-                match self.head.2{
-                    Direction::Right => {},
-                    _ => self.head.2 = Direction::Left,
-                } 
-            }
-            _ => (),
+            self.moved = false;
         }
         return Ok(());
     }
@@ -203,6 +209,7 @@ struct State {
     body: Vec<Positions>,
     speed: u32,
     points: u32,
+    moved: bool,
     over: bool,
     //head: (Position, Direction, graphics::Mesh)
 }
