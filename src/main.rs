@@ -14,8 +14,10 @@ fn main() {
         .default_conf(config)
         .build()
         .unwrap();
-    let mut x: f32 = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
-    let mut y: f32 = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
+
+    let x: f32 = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
+    let y: f32 = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
+
     let state = State {
         apple: (Vec2::new(x , y), 
                 graphics::Mesh::new_rectangle(
@@ -33,9 +35,13 @@ fn main() {
                     graphics::Rect::new(0.0,0.0,20.0,20.0),
                     Color::GREEN,
                 ).unwrap(), 
-                Direction::NotSet),
-
+                Direction::NotSet,
+                Vec2::new(0.0, 0.0),
+            ),
+        body: Vec::new(),
         speed: 20,
+        increase_signal: false,
+        points: 0,
     };
     event::run(ctx, event_loop, state);
 }
@@ -43,6 +49,17 @@ fn main() {
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
             while ctx.time.check_update_time(self.speed){
+                self.head.3 = self.head.0;
+                if self.body.len() > 0{
+                    self.body[0].2 = self.body[0].0;
+                    self.body[0].0 = self.head.3;
+                
+                    for i in 0..self.body.len() - 1{
+                        self.body[i + 1].0 = self.body[i].2;
+                    }
+
+                }
+
                 match self.head.2 {
                     Direction::Up => self.head.0.y = self.head.0.y - DISTANCE,
                     Direction::Down => self.head.0.y = self.head.0.y + DISTANCE,                
@@ -52,9 +69,29 @@ impl ggez::event::EventHandler<GameError> for State {
                 }
                 if self.apple.0 == self.head.0
                 {
+                    let mut last_p: Vec2;
+                    if self.body.len() > 0{
+                        last_p = self.body[self.body.len() - 1].2;
+                    }  else{
+                        last_p = self.head.3;
+                    }
+
                     self.apple.0.x = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
                     self.apple.0.y = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
                     self.speed = self.speed + 2;
+                    self.increase_signal = true;
+                    self.body.push((self.head.3,
+                                    graphics::Mesh::new_rectangle(
+                                    ctx,
+                                    graphics::DrawMode::fill(),
+                                    graphics::Rect::new(0.0,0.0,20.0,20.0),
+                                    Color::RED,
+                                    ).unwrap(),
+                                    last_p,
+                                    ),
+                                );
+
+                    self.points = self.points + 100;
                 }
             }
         return Ok(());
@@ -66,6 +103,11 @@ impl ggez::event::EventHandler<GameError> for State {
 
             canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
             canvas.draw(&self.head.1, self.head.0);
+
+            for part in self.body.iter(){
+                canvas.draw(&self.head.1, part.0);
+            }
+
 
             canvas.finish(ctx)?;
         return Ok(());
@@ -101,24 +143,20 @@ impl ggez::event::EventHandler<GameError> for State {
             _ => (),
         }
 
-        Return Ok(());
+        return Ok(());
     }
 }
 
 
 struct State {
     apple: (Vec2, graphics::Mesh),
-    head: (Vec2, graphics::Mesh, Direction),
+    head: (Vec2, graphics::Mesh, Direction, Vec2),
+    body: Vec<(Vec2, graphics::Mesh, Vec2)>,
     speed: u32,
+    points: u32,
+    increase_signal: bool,
     //head: (Position, Direction, graphics::Mesh)
 }
-
-struct Snake{
-    head: (PositionInfo, Direction, graphics::Mesh),
-    body: Vec<PositionInfo>,
-}
-
-struct PositionInfo(Vec2, Vec2);
 
 enum Direction{
     NotSet,
