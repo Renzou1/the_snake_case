@@ -10,13 +10,10 @@ const RANGE_Y: i32 = 51;
 
 fn main() {
     let config = conf::Conf::new();
-    let (ctx, event_loop) = ContextBuilder::new("demo_ggez", "Renzo")
+    let (ctx, event_loop) = ContextBuilder::new("the_snake_case", "Renzo")
         .default_conf(config)
         .build()
         .unwrap();
-
-    let x: f32 = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
-    let y: f32 = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
 
     let apple_mesh: graphics::Mesh = graphics::Mesh::new_rectangle(
         &ctx,
@@ -32,22 +29,29 @@ fn main() {
         Color::GREEN,
     ).unwrap();
 
-    let body_temp = Positions{
+    let body_pos = Positions{
         current: Vec2::new(0.0, 0.0),
         previous: Vec2::new(0.0, 0.0),
     };
+
+    let head_pos = Positions{
+        current: Vec2::new(0.0, 0.0),
+        previous: Vec2::new(0.0, 0.0),
+    };
+
+    let x: f32 = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
+    let y: f32 = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
 
     let state = State {
         apple: (Vec2::new(x , y), 
                 apple_mesh,
                 ),
 
-        head: (Vec2::new(0.0, 0.0), 
+        head: (head_pos, 
                 snake_mesh, 
                 Direction::NotSet,
-                Vec2::new(0.0, 0.0),
             ),
-        body: vec![body_temp],
+        body: vec![body_pos],
         speed: 20,
         points: 0,
     };
@@ -58,23 +62,26 @@ fn main() {
 impl ggez::event::EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
             while ctx.time.check_update_time(self.speed){
-                self.head.3 = self.head.0;
-                self.body[0].previous = self.body[0].current;
-                self.body[0].current = self.head.3;
 
+                self.head.0.previous = self.head.0.current;
+                
+                //updates body
+                self.body[0].previous = self.body[0].current;
+                self.body[0].current = self.head.0.previous;
                 for i in 1..self.body.len(){
                     self.body[i].previous = self.body[i].current;
                     self.body[i].current = self.body[i - 1].previous;
                 }
 
                 match self.head.2 {
-                    Direction::Up => self.head.0.y = self.head.0.y - DISTANCE,
-                    Direction::Down => self.head.0.y = self.head.0.y + DISTANCE,                
-                    Direction::Right => self.head.0.x = self.head.0.x + DISTANCE,
-                    Direction::Left => self.head.0.x = self.head.0.x - DISTANCE,
-                    Direction::NotSet => self.head.0.x = self.head.0.x,
+                    Direction::Up => self.head.0.current.y = self.head.0.current.y - DISTANCE,
+                    Direction::Down => self.head.0.current.y = self.head.0.current.y + DISTANCE,                
+                    Direction::Right => self.head.0.current.x = self.head.0.current.x + DISTANCE,
+                    Direction::Left => self.head.0.current.x = self.head.0.current.x - DISTANCE,
+                    Direction::NotSet => self.head.0.current.x = self.head.0.current.x,
                 }
-                if self.apple.0 == self.head.0
+                // if catches apple:
+                if self.apple.0 == self.head.0.current
                 {
                     self.apple.0.x = (rand::thread_rng().gen_range(0..RANGE_X) * DISTANCE as i32) as f32;
                     self.apple.0.y = (rand::thread_rng().gen_range(0..RANGE_Y) * DISTANCE as i32) as f32;
@@ -87,16 +94,16 @@ impl ggez::event::EventHandler<GameError> for State {
 
                     self.points = self.points + 100;
                 }
+                
             }
         return Ok(());
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-            let mut canvas =
-                graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
+            let mut canvas = graphics::Canvas::from_frame(ctx, graphics::Color::BLUE);
 
             canvas.draw(&self.apple.1, self.apple.0); // mesh, Vec2
-            canvas.draw(&self.head.1, self.head.0);
+            canvas.draw(&self.head.1, self.head.0.current);
 
             for part in self.body.iter(){
                 canvas.draw(&self.head.1, part.current); // smake mesh, Vec2
@@ -141,16 +148,6 @@ impl ggez::event::EventHandler<GameError> for State {
     }
 }
 
-
-struct State {
-    apple: (Vec2, graphics::Mesh),
-    head: (Vec2, graphics::Mesh, Direction, Vec2),
-    body: Vec<Positions>,
-    speed: u32,
-    points: u32,
-    //head: (Position, Direction, graphics::Mesh)
-}
-
 struct Positions{
     current: Vec2,
     previous: Vec2,
@@ -163,6 +160,19 @@ enum Direction{
     Right,
     Left,
 }
+
+struct State {
+    apple: (Vec2, graphics::Mesh),
+    head: (Positions, graphics::Mesh, Direction),
+    body: Vec<Positions>,
+    speed: u32,
+    points: u32,
+    //head: (Position, Direction, graphics::Mesh)
+}
+
+
+
+
 
 
 
